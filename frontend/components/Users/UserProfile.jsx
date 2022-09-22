@@ -210,7 +210,7 @@ const UserProfile = ({ userAddress }) => {
 
   const handleProfileModal = () => {
     loadingModal.onOpen();
-    fetch(`${config}/users/${userAddress.address.address}`, {
+    fetch(`${config}/users/${userAddress.address}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -466,58 +466,59 @@ const UserProfile = ({ userAddress }) => {
             <ModalOverlay />
             <ModalContent bgColor="#0d0717">
               <ModalCloseButton />
-              <ModalHeader className="modal-head">Profile Settings</ModalHeader>
+              <ModalHeader className="modal-head">Settings</ModalHeader>
               <ModalBody>
-                <Button
-                  size="md"
-                  colorScheme="purple"
-                  borderColor="purple.50"
-                  fontFamily="Laser"
-                  m="3"
-                  color="purple.50"
-                  borderWidth="1px"
-                  borderStyle="solid"
-                  bg="transparent"
-                  fontSize="md"
-                  _hover={{
-                    color: "purple.100",
-                    borderColor: "purple.100",
-                    borderWidth: "1px",
-                    borderStyle: "solid",
-                  }}
-                  onClick={() => {
-                    userDispatch({
-                      type: "setOnJury",
-                      payload: true,
-                    });
-                    handleProfileModal();
-                    juryPoolSubmit?.();
-                  }}
-                >
-                  Apply for Jury
-                </Button>
+                <HStack gap="2">
+                  <Button
+                    size="md"
+                    colorScheme="purple"
+                    borderColor="purple.50"
+                    fontFamily="Laser"
+                    m="3"
+                    color="purple.50"
+                    borderWidth="1px"
+                    borderStyle="solid"
+                    bg="transparent"
+                    fontSize="md"
+                    _hover={{
+                      color: "purple.100",
+                      borderColor: "purple.100",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                    }}
+                    onClick={() => {
+                      userDispatch({
+                        type: "setOnJury",
+                        payload: true,
+                      });
+                      handleProfileModal();
+                      juryPoolSubmit?.();
+                    }}
+                  >
+                    Apply for Jury
+                  </Button>
 
-                <Button
-                  size="md"
-                  colorScheme="purple"
-                  borderColor="purple.50"
-                  fontFamily="Laser"
-                  m="3"
-                  borderWidth="1px"
-                  borderStyle="solid"
-                  color="purple.50"
-                  bg="transparent"
-                  fontSize="md"
-                  _hover={{
-                    color: "purple.100",
-                    borderColor: "purple.100",
-                  }}
-                  disabled={socialState.xmtpUser}
-                  onClick={executeXmtp}
-                >
-                  Join XMTP
-                </Button>
-
+                  <Button
+                    size="md"
+                    colorScheme="purple"
+                    borderColor="purple.50"
+                    fontFamily="Laser"
+                    m="3"
+                    borderWidth="1px"
+                    borderStyle="solid"
+                    color="purple.50"
+                    bg="transparent"
+                    fontSize="md"
+                    _hover={{
+                      color: "purple.100",
+                      borderColor: "purple.100",
+                    }}
+                    disabled={socialState.xmtpUser}
+                    onClick={executeXmtp}
+                  >
+                    Join XMTP
+                  </Button>
+                </HStack>
                 <FormLabel
                   htmlFor="bio"
                   fontSize="sm"
@@ -755,7 +756,7 @@ const UserProfile = ({ userAddress }) => {
             <ModalContent bgColor="#0d0717">
               <ModalCloseButton />
               <ModalHeader className="modal-head" letterSpacing="1.4px">
-                Chat
+                Message
               </ModalHeader>
               <ModalBody>
                 <Textarea

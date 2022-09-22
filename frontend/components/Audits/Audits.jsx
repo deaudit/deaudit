@@ -53,7 +53,7 @@ const Audits = () => {
 
   useEffect(() => {
     const init = async () => {
-      const auditres = await fetch(`${config}/audits/`);
+      const auditres = await fetch(`${config}/audits`);
       const auditList = await auditres.json();
 
       setAudits(auditList?.data);
