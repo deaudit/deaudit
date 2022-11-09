@@ -15,7 +15,7 @@ import Head from "next/head";
 const Landing = () => {
   return (
     <Flex
-      w="100vw"
+      w="100%"
       flexDirection="column"
       alignItems="center"
       className="home"

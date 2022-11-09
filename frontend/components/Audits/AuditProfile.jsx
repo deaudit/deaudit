@@ -311,7 +311,8 @@ const AuditProfile = ({ auditAddress }) => {
           flexDir="column"
           position="absolute"
           top="20vh"
-          w="100%"
+          w="99%"
+          overflowX="none"
           my="auto"
           textAlign="center"
         >

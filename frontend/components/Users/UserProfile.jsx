@@ -353,7 +353,7 @@ const UserProfile = ({ userAddress }) => {
           pos="absolute"
           overflowX="hidden"
           top="0"
-          w="100vw"
+          w="98%"
         >
           <Head>
             <title>{title}</title>
