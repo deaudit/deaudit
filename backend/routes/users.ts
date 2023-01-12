@@ -14,6 +14,7 @@ userRouter.get("/", getAllUsers);
 
 //@route	POST /users/
 //@desc		Add user
+//@token 	Secured
 userRouter.post("/", addUser);
 
 //@route	GET /users/:address
@@ -22,6 +23,7 @@ userRouter.get("/:address", getUserData);
 
 //@route	PUT /users/:address
 //@desc		Update user data
+//@token 	Secured
 userRouter.put("/:address", updateUserData);
 
 export default userRouter;

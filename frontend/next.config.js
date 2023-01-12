@@ -2,7 +2,8 @@
 const nextConfig = {
   reactStrictMode: false,
   env: {
-    NEXT_APP_IPFS_TOKEN: process.env.NEXT_APP_IPFS_TOKEN
+    NEXT_APP_IPFS_TOKEN: process.env.NEXT_APP_IPFS_TOKEN,
+    NEXT_APP_AUDIT_TOKEN : process.env.NEXT_APP_AUDIT_TOKEN
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {

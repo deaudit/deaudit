@@ -13,6 +13,7 @@ bugRouter.get("/users/:address", getBugsByUser);
 
 //@route	POST /bugs/
 //@desc		Add bug
+//@token 	Secured
 bugRouter.post("/", addBug);
 
 export default bugRouter;

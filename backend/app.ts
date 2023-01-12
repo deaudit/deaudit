@@ -18,6 +18,10 @@ app.use(cors());
 
 app.use(morgan("dev"));
 
+app.get("/", (req, res) => {
+	res.send("Server running 🚀");
+});
+
 app.use("/users", userRouter);
 app.use("/audits", auditRouter);
 app.use("/tags", tagsRouter);

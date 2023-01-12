@@ -1,10 +1,26 @@
 import supabase from "../supabase/client";
+import { isValidToken } from "../utils/valid";
 
 /**
  * Add audit data
  * @route POST /audit/
  */
 export const addAudit = async (req, res) => {
+	const auth = req.headers.authorization;
+	if (!auth) {
+		return res.status(401).json({
+			message: "No Authorization header found",
+		});
+	}
+
+	const token = auth.replace("Bearer ", "");
+
+	if (!isValidToken(token)) {
+		return res.status(401).json({
+			message: "Invalid Token",
+		});
+	}
+
 	const { data, error } = await supabase.from("audits").insert([
 		{
 			...req.body,
@@ -72,6 +88,20 @@ export const getAuditData = async (req, res) => {
  * @route PUT /audit/:id
  */
 export const updateAuditData = async (req, res) => {
+	const auth = req.headers.authorization;
+	if (!auth) {
+		return res.status(401).json({
+			message: "No Authorization header found",
+		});
+	}
+
+	const token = auth.replace("Bearer ", "");
+
+	if (!isValidToken(token)) {
+		return res.status(401).json({
+			message: "Invalid Token",
+		});
+	}
 	const { data, error } = await supabase
 		.from("audits")
 		.update([

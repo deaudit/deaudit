@@ -1,4 +1,5 @@
 import supabase from "../supabase/client";
+import { isValidToken } from "../utils/valid";
 
 /**
  * Retrieve bug data by audit
@@ -45,6 +46,20 @@ export const getBugsByUser = async (req, res) => {
 };
 
 export const addBug = async (req, res) => {
+	const auth = req.headers.authorization;
+	if (!auth) {
+		return res.status(401).json({
+			message: "No Authorization header found",
+		});
+	}
+
+	const token = auth.replace("Bearer ", "");
+
+	if (!isValidToken(token)) {
+		return res.status(401).json({
+			message: "Invalid Token",
+		});
+	}
 	const { audit_id, reported_by, description } = req.body;
 
 	const { data, error } = await supabase.from("bugs").insert([
