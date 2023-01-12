@@ -12,8 +12,9 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   useEffect(() => {
     const init = async () => {
-      const res = await fetch(`${config}/users/`);
-      const userList = await res.json();
+      const userList = await fetch(`${config}/users/`)
+        .then(res => res.json())
+        .catch(err => console.log(err));
 
       setUsers(userList?.data);
       setLoading(false);

@@ -23,41 +23,13 @@ const Audits = () => {
   const [loading, setLoading] = useState(true);
   const [audits, setAudits] = useState([]);
 
-  // Tags
-  /*
-  const [tags, setTags] = useState([]);
-  const [selected, setSelected] = useState([]);
-  const handleTagFilter = tag => {
-    if (selected.includes(tag)) {
-      setSelected(selected.filter(t => t !== tag));
-    } else {
-      setSelected([...selected, tag]);
-    }
-  };
-
   useEffect(() => {
     const init = async () => {
-      fetch(`${config}/tags`)
+      const auditList = await fetch(`${config}/audits`)
         .then(res => res.json())
-        .then(result => {
-          setTags(result?.data);
-        })
-        .catch(err => {
-          console.log(err);
-        });
-    };
-    init();
-  }, []);
-
-  */
-
-  useEffect(() => {
-    const init = async () => {
-      const auditres = await fetch(`${config}/audits`);
-      const auditList = await auditres.json();
-
-      setAudits(auditList?.data);
+        .catch(err => console.log(err));
       setLoading(false);
+      setAudits(auditList?.data);
     };
     init();
   }, []);

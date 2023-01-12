@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Center,
-  Checkbox,
   Flex,
   FormLabel,
   Heading,
@@ -50,7 +49,7 @@ import { config, CONTRACT_ADDRESS, ellipseAddress } from "@lib/utilities";
 import { Web3Storage } from "web3.storage";
 import Link from "next/link";
 import contractAbi from "@lib/contractAbi.json";
-import { ethers } from "ethers";
+import wretch from "wretch";
 import { useRouter } from "next/router";
 import Loading from "@components/Loading/Loading";
 import { Client } from "@xmtp/xmtp-js";
@@ -135,16 +134,22 @@ const UserProfile = ({ userAddress }) => {
 
   const executeXmtp = async () => {
     socialDispatch({ type: "setXmtpUser", payload: true });
-    fetch(`${config}/users/${userAddress.address}`, {
-      method: "PUT",
-      headers: {
+    // WRETCH
+    wretch(`${config}/users/${userAddress.address}`)
+      .headers({
         "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+      })
+      .auth(`Bearer ${process.env.NEXT_APP_AUDIT_TOKEN}`)
+      .put({
         xmtp: socialState.xmtpUser,
-      }),
-    })
-      .then(res => {
+      })
+      .internalError(err => {
+        console.log(err);
+      })
+      .notFound(err => {
+        console.log(err);
+      })
+      .res(res => {
         console.log("Success, xmtp updated in db.");
       })
       .catch(err => {
@@ -210,12 +215,13 @@ const UserProfile = ({ userAddress }) => {
 
   const handleProfileModal = () => {
     loadingModal.onOpen();
-    fetch(`${config}/users/${userAddress.address}`, {
-      method: "PUT",
-      headers: {
+    // wretch
+    wretch(`${config}/users/${userAddress.address}`)
+      .headers({
         "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+      })
+      .auth(`Bearer ${process.env.NEXT_APP_AUDIT_TOKEN}`)
+      .put({
         twitter_username: socialState.twitter,
         github_username: socialState.github,
         linkedin_username: socialState.linkedin,
@@ -223,10 +229,15 @@ const UserProfile = ({ userAddress }) => {
         on_jury: userState.on_jury,
         profile_image: socialState.profileImage,
         cover_image: socialState.coverImage,
-      }),
-    })
-      .then(res => {
-        console.log("Success");
+      })
+      .internalError(err => {
+        console.log(err);
+      })
+      .notFound(err => {
+        console.log(err);
+      })
+      .res(res => {
+        console.log("Success, profile updated in DB.");
       })
       .catch(err => {
         console.log(err);
@@ -278,24 +289,21 @@ const UserProfile = ({ userAddress }) => {
   });
 
   useEffect(() => {
-    if (address === userAddress.address) setTitle("Profile");
-    else setTitle(cutAddress);
-  }, [userAddress.address, address, cutAddress]);
-
-  useEffect(() => {
     const init = async () => {
-      const [usersRes, bugsRes] = await Promise.all([
-        fetch(`${config}/users/${userAddress.address}`),
-        fetch(`${config}/bugs/users/${userAddress.address}`),
-      ]);
-
-      const [user, bugList] = await Promise.all([
-        usersRes.json(),
-        bugsRes.json(),
-      ]);
-      if (user.data === undefined || bugList.data === undefined)
-        router.push("/404");
+      const user = await fetch(`${config}/users/${userAddress.address}`)
+        .then(res => res.json())
+        .catch(err => console.log(err));
+      if (user?.data === undefined) router.push("/404");
       else {
+        const bugList = await fetch(
+          `${config}/bugs/users/${userAddress.address}`
+        )
+          .then(res => res.json())
+          .catch(err => {
+            console.log(err);
+          });
+        setLoading(false);
+        setBugs(bugList.data);
         socialDispatch({
           type: "setGithub",
           payload: user.data.github_username,
@@ -326,16 +334,18 @@ const UserProfile = ({ userAddress }) => {
           payload: user.data.audits_requested,
         });
 
-        setBugs(bugList.data);
         userDispatch({ type: "setOnJury", payload: user.data.on_jury });
         setCutAddress("User " + ellipseAddress(userAddress.address));
-
         setOpacity("100%");
-        setLoading(false);
       }
     };
     init();
   }, [userAddress.address, address, router, socialState.xmtpUser]);
+
+  useEffect(() => {
+    if (address === userAddress.address) setTitle("Profile");
+    else setTitle(cutAddress);
+  }, [userAddress.address, address, cutAddress]);
 
   if (loading) return <Loading />;
   else

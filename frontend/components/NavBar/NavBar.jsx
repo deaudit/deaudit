@@ -2,53 +2,51 @@ import { Box, Button, Flex, Heading, Image } from "@chakra-ui/react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Link as Linker } from "@chakra-ui/react";
 import Link from "next/link";
-import { useAccount, useSigner } from "wagmi";
+import { useAccount } from "wagmi";
 import { useCallback, useEffect, useState } from "react";
-import { Client } from "@xmtp/xmtp-js";
-
+import wretch from "wretch";
 import { config } from "@lib/utilities";
 import styles from "@styles/Landing.module.scss";
 
 const NavBar = () => {
   const { address, isConnecting, isDisconnected } = useAccount();
-  const { data: signer, isError: error, isLoading: load } = useSigner();
+
   const [exists, setExists] = useState(false);
 
   const fetchUser = useCallback(() => {
     address &&
-      fetch(`${config}/users/${address}`)
-        .then(res => {
+      wretch(`${config}/users/${address}`)
+        .get()
+        .internalError(err => {
+          setExists(false);
+        })
+        .res(res => {
           if (res.status === 200) setExists(true);
           else setExists(false);
-        })
-        .catch(err => {
-          setExists(false);
         });
   }, [address]);
 
   const createUser = useCallback(() => {
-    fetch(`${config}/users`, {
-      method: "POST",
-      headers: {
+    wretch(`${config}/users`)
+      .headers({
         "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        address: address,
-      }),
-    })
-      .then(res => {
-        if (res.status === 200) console.log("User created.");
-        else if (res.status === 500) console.log("User already exists in DB.");
       })
-      .catch(err => {
-        console.log(err);
+      .auth("Bearer " + process.env.NEXT_APP_AUDIT_TOKEN)
+      .post({
+        address: address,
+      })
+      .internalError(err => {
+        console.log(err.message);
+      })
+      .res(res => {
+        console.log("User created.");
       });
   }, [address]);
 
   useEffect(() => {
-    createUser();
+    if (address && !exists) createUser();
     fetchUser();
-  }, [address, fetchUser, createUser]);
+  }, [address, fetchUser, createUser, exists]);
 
   return (
     <>

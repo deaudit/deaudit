@@ -11,8 +11,8 @@ import {
   Tag,
   TagCloseButton,
   TagLabel,
+  useToast,
 } from "@chakra-ui/react";
-import Router from "next/router";
 import React, { useState } from "react";
 import styles from "@styles/NewAudit.module.scss";
 import { config, CONTRACT_ADDRESS, currency, pascalCase } from "@lib/utilities";
@@ -26,8 +26,10 @@ import {
 import Head from "next/head";
 import contractAbi from "@lib/contractAbi.json";
 import { ethers } from "ethers";
+import wretch from "wretch";
 
 const NewAudit = () => {
+  const toast = useToast();
   const chains = allChains.filter(
     c =>
       c?.rpcUrls?.alchemy?.includes("eth") ||
@@ -87,61 +89,82 @@ const NewAudit = () => {
   const handleSubmit = e => {
     console.log("Starting POST to Database.");
 
-    fetch(`${config}/users`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        address: address,
-      }),
-    })
-      .then(res => {
-        console.log("Success");
-      })
-      .catch(err => {
-        console.log(err);
-      });
+    // use wretch to handle http request
 
-    fetch(`${config}/audits`, {
-      method: "POST",
-      headers: {
+    wretch(`${config}/audits`)
+      .headers({
         "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+      })
+      .auth(`Bearer ${process.env.NEXT_APP_AUDIT_TOKEN}`)
+      .post({
         created_by: address,
         contract_address: contractAddress,
         tags: tags,
         initial_pool_size: poolSize,
         chain: chain,
-      }),
-    })
-      .then(res => {
-        console.log("Success");
+      })
+      .fetchError(err => {
+        toast({
+          title: "Error.",
+          description: err.message,
+          position: "bottom",
+          variant: "left-accent",
+          status: "error",
+          duration: 5000,
+          isClosable: false,
+        });
+      })
+      .res(res => {
+        console.log("Audit created.");
+        wretch(`${config}/users/${address}`)
+          .headers({
+            "Content-Type": "application/json",
+          })
+          .auth(`Bearer ${process.env.NEXT_APP_AUDIT_TOKEN}`)
+          .put({
+            audits_requested: [contractAddress],
+          })
+          .fetchError(err => {
+            toast({
+              title: "Error.",
+              description: err.message,
+              position: "bottom",
+              variant: "left-accent",
+              status: "error",
+              duration: 3000,
+              isClosable: false,
+            });
+          })
+          .res(res => {
+            console.log("Synchronised");
+            console.log("Sending POST to contract.");
+            // auditSubmit?.();
+
+            toast({
+              title: "Success.",
+              description: "Audit Created.",
+              position: "bottom",
+              variant: "left-accent",
+              status: "success",
+              duration: 3000,
+              isClosable: false,
+            });
+          })
+          .catch(err => {
+            console.log(err);
+          });
       })
       .catch(err => {
-        console.log(err);
+        toast({
+          title: "Error.",
+          description: err.message,
+          position: "bottom",
+          variant: "left-accent",
+          status: "error",
+          duration: 9000,
+          isClosable: false,
+        });
       });
-
-    fetch(`${config}/users/${address}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        audits_requested: [contractAddress],
-      }),
-    })
-      .then(res => {
-        console.log("Success");
-      })
-      .catch(err => {
-        console.log(err);
-      });
-
-    console.log("Sending POST to contract...");
-    auditSubmit?.();
-    console.log("Done.");
   };
 
   return (

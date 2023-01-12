@@ -43,6 +43,7 @@ import {
   usePrepareContractWrite,
 } from "wagmi";
 import contractAbi from "@lib/contractAbi.json";
+import wretch from "wretch";
 import { BsBug } from "react-icons/bs";
 import { ethers } from "ethers";
 import AuditBug from "./AuditBug";
@@ -178,66 +179,62 @@ const AuditProfile = ({ auditAddress }) => {
   });
 
   const handleBugSubmit = async () => {
-    // Create user if DNE
-    fetch(`${config}/users`, {
-      method: "POST",
-      headers: {
+    // Create bug if not exists and get ID using wretch
+    const response = await wretch(`${config}/bugs`)
+      .headers({
         "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        address: address,
-      }),
-    })
-      .then(res => {
-        console.log("Success");
       })
-      .catch(err => {
-        console.log(err);
-      });
-
-    // Create bug if not exists and get ID
-    const response = await fetch(`${config}/bugs`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+      .auth(`Bearer ${process.env.NEXT_APP_AUDIT_TOKEN}`)
+      .post({
         audit_id: auditAddress.address,
         reported_by: address,
         description: bugDescription,
-      }),
-    });
-    const data = await response.json();
-    const num = data.data;
+      })
+      .fetchError(err => {
+        console.log(err);
+      })
+      .internalError(err => {
+        console.log(err);
+      })
+      .res(res => res.json())
+      .catch(err => {
+        console.log(err);
+      });
 
-    // update audit with the bug using the ID from above
-    fetch(`${config}/audits/${auditAddress.address}`, {
-      method: "PUT",
-      headers: {
+    const num = response.data;
+
+    // update audit with the bug using the ID from above using wretch
+    wretch(`${config}/audits/${auditAddress.address}`)
+      .headers({
         "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+      })
+      .auth(`Bearer ${process.env.NEXT_APP_AUDIT_TOKEN}`)
+      .put({
         bugs_reported: [...specificBugsArr, num],
-      }),
-    })
-      .then(res => {
-        console.log("Success");
+      })
+      .internalError(err => {
+        console.log(err);
+      })
+      .res(res => {
+        console.log("Success" + res);
       })
       .catch(err => {
         console.log(err);
       });
 
-    // update user with the bug using the ID from above
-    fetch(`${config}/users/${address}`, {
-      method: "PUT",
-      headers: {
+    // update user with the bug using the ID from above using wretch
+    wretch(`${config}/users/${address}`)
+      .headers({
         "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+      })
+      .auth(`Bearer ${process.env.NEXT_APP_AUDIT_TOKEN}`)
+      .put({
         bugs_reported: [num],
-      }),
-    })
-      .then(res => {
+      })
+      .internalError(err => {
+        console.log(err);
+      })
+      .res(res => {
         console.log("Success");
       })
       .catch(err => {
@@ -264,21 +261,22 @@ const AuditProfile = ({ auditAddress }) => {
 
   useEffect(() => {
     const init = async () => {
-      const [auditsRes, bugsRes] = await Promise.all([
-        fetch(`${config}/audits/${auditAddress.address}`),
-        fetch(`${config}/bugs/audits/${auditAddress.address}`),
-      ]);
+      const audit = await fetch(`${config}/audits/${auditAddress.address}`)
+        .then(res => res.json())
+        .catch(err => {
+          console.log(err);
+        });
 
-      const [audit, bugList] = await Promise.all([
-        auditsRes.json(),
-        bugsRes.json(),
-      ]);
-
-      if (audit.data === undefined || bugList.data === undefined)
-        router.push("/404");
+      if (audit?.data === undefined) router.push("/404");
       else {
         setCreatedBy(audit.data.created_by);
         setTags(audit.data.tags);
+        const bugList = await fetch(
+          `${config}/bugs/audits/${auditAddress.address}`
+        )
+          .then(res => res.json())
+          .catch(err => console.log(err));
+        setLoading(false);
         setBugs(bugList.data);
         setAuditUrl(
           allChains.find(c => c.name === audit.data.chain).blockExplorers
@@ -289,7 +287,6 @@ const AuditProfile = ({ auditAddress }) => {
         setSpecificBugsArr(bugs?.map(bug => bug.id));
         setOpacity("100%");
         setAudit(audit.data);
-        setLoading(false);
       }
     };
     init();
